@@ -1,2 +1,2 @@
-# el-rectangulo-contrato
+# El-Rectangulo-<contrato
 Reservas - Alquileres
