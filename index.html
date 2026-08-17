@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Rectángulo — Contrato de Eventos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --tierra:   #7B5E3A;
+    --campo:    #4A6741;
+    --crema:    #F7F3EC;
+    --papel:    #FFFDF8;
+    --linea:    #D6CFC4;
+    --texto:    #2C2416;
+    --suave:    #8C7B68;
+    --verde-ok: #4A6741;
+    --rojo-err: #9B3A2A;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--crema);
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--tierra);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .logo-mark {
+    width: 48px; height: 48px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: #fff;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: #fff; font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+  header p { font-size: 12px; color: rgba(255,255,255,0.65); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── LAYOUT ── */
+  .workspace {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    min-height: calc(100vh - 104px);
+  }
+
+  /* ── FORMULARIO ── */
+  .form-panel {
+    background: #fff;
+    border-right: 1px solid var(--linea);
+    padding: 32px 28px;
+    overflow-y: auto;
+    max-height: calc(100vh - 104px);
+    position: sticky;
+    top: 0;
+  }
+  .form-panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 600;
+    color: var(--tierra);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--linea);
+  }
+  .section-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--suave);
+    margin: 24px 0 12px;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 11px; font-weight: 500;
+    color: var(--suave);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--linea);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--texto);
+    background: var(--papel);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--tierra);
+    background: #fff;
+  }
+  .field input[readonly] {
+    background: var(--crema);
+    color: var(--campo);
+    font-weight: 600;
+    cursor: default;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .calc-box {
+    background: var(--crema);
+    border: 1px solid var(--linea);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 0;
+  }
+  .calc-box .calc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--linea);
+    font-size: 12px;
+  }
+  .calc-box .calc-row:last-child { border-bottom: none; }
+  .calc-box .calc-row span:first-child { color: var(--suave); }
+  .calc-box .calc-row span:last-child { font-weight: 600; color: var(--tierra); }
+  .calc-box .calc-row.total span { font-size: 13px; color: var(--campo); }
+
+  .modalidad-info {
+    font-size: 11px; color: var(--suave);
+    background: #EEF3ED;
+    border-left: 3px solid var(--campo);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .modalidad-info.alerta {
+    background: #FDF3EE;
+    border-left-color: var(--tierra);
+  }
+
+  .btn-generar {
+    width: 100%; margin-top: 24px;
+    padding: 13px;
+    background: var(--tierra);
+    color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.2s;
+  }
+  .btn-generar:hover { background: #6A4F30; }
+
+  .btn-imprimir {
+    width: 100%; margin-top: 10px;
+    padding: 11px;
+    background: transparent;
+    color: var(--campo);
+    border: 1px solid var(--campo);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-imprimir:hover { background: var(--campo); color: #fff; }
+
+  /* ── PREVIEW ── */
+  .preview-panel {
+    padding: 40px 48px;
+    overflow-y: auto;
+    max-height: calc(100vh - 104px);
+  }
+  .contrato {
+    background: #fff;
+    border: 1px solid var(--linea);
+    border-radius: 4px;
+    padding: 56px 64px;
+    max-width: 720px;
+    margin: 0 auto;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--texto);
+  }
+  .contrato-header {
+    text-align: center;
+    border-bottom: 2px solid var(--tierra);
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+  }
+  .contrato-header .nombre-evento {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--tierra);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .contrato-header .subtitulo {
+    font-size: 11px;
+    color: var(--suave);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .contrato p { margin-bottom: 14px; text-align: justify; }
+  .clausula {
+    margin-bottom: 18px;
+  }
+  .clausula-titulo {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tierra);
+    margin-bottom: 6px;
+  }
+  .highlight {
+    background: #FFFBEC;
+    border: 1px solid #E8D98A;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-weight: 600;
+  }
+  .firmas {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .firma-bloque { border-top: 1px solid var(--texto); padding-top: 10px; }
+  .firma-bloque .nombre { font-weight: 600; font-size: 12px; }
+  .firma-bloque .rol { font-size: 11px; color: var(--suave); }
+  .firma-bloque-full {
+    margin-top: 32px;
+    border-top: 1px solid var(--texto);
+    padding-top: 10px;
+    max-width: 280px;
+  }
+
+  @media print {
+    header, .form-panel { display: none !important; }
+    .workspace { display: block; }
+    .preview-panel { padding: 0; max-height: none; overflow: visible; }
+    .contrato { box-shadow: none; border: none; padding: 20px; max-width: 100%; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">R</div>
+  <div>
+    <h1>El Rectángulo — Contrato de Eventos</h1>
+    <p>Colonia Cello, Santa Fe · Completá el formulario y generá el contrato</p>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- FORMULARIO -->
+  <aside class="form-panel">
+    <h2>Datos del contrato</h2>
+
+    <div class="section-label">Fecha y lugar</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Día</label>
+        <input type="number" id="f_dia" min="1" max="31" placeholder="17">
+      </div>
+      <div class="field">
+        <label>Mes</label>
+        <select id="f_mes">
+          <option value="">— mes —</option>
+          <option>enero</option><option>febrero</option><option>marzo</option>
+          <option>abril</option><option>mayo</option><option>junio</option>
+          <option>julio</option><option selected>agosto</option><option>septiembre</option>
+          <option>octubre</option><option>noviembre</option><option>diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Año</label>
+      <input type="number" id="f_anio" value="2026">
+    </div>
+
+    <div class="section-label">Cliente</div>
+    <div class="field">
+      <label>Nombre y apellido</label>
+      <input type="text" id="c_nombre" placeholder="Berazategui, Carlos">
+    </div>
+    <div class="field">
+      <label>DNI</label>
+      <input type="text" id="c_dni" placeholder="41.879.400">
+    </div>
+    <div class="field">
+      <label>Domicilio</label>
+      <input type="text" id="c_domicilio" placeholder="Calle Dean Funes 2026">
+    </div>
+    <div class="field">
+      <label>Ciudad</label>
+      <input type="text" id="c_ciudad" placeholder="San Francisco">
+    </div>
+
+    <div class="section-label">El evento</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Día del evento</label>
+        <input type="number" id="e_dia" min="1" max="31" placeholder="19">
+      </div>
+      <div class="field">
+        <label>Mes</label>
+        <select id="e_mes">
+          <option value="">— mes —</option>
+          <option>enero</option><option>febrero</option><option>marzo</option>
+          <option>abril</option><option>mayo</option><option>junio</option>
+          <option>julio</option><option>agosto</option><option selected>septiembre</option>
+          <option>octubre</option><option>noviembre</option><option>diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Año del evento</label>
+      <input type="number" id="e_anio" value="2026">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Horario de inicio</label>
+        <input type="time" id="e_hora" value="14:00">
+      </div>
+      <div class="field">
+        <label>Tolerancia (horas)</label>
+        <input type="number" id="e_tolerancia" value="1" min="0" max="6">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Adultos estimados</label>
+        <input type="number" id="e_adultos" placeholder="20" min="0">
+      </div>
+      <div class="field">
+        <label>Menores de 12 años</label>
+        <input type="number" id="e_menores" placeholder="5" min="0">
+      </div>
+    </div>
+
+    <div class="section-label">Precio</div>
+    <div class="field">
+      <label>Precio total del alquiler ($)</label>
+      <input type="number" id="p_total" placeholder="186000" oninput="calcular()">
+    </div>
+
+    <div class="calc-box" id="calc_box" style="display:none">
+      <div class="calc-row">
+        <span>Seña / Reserva (30%)</span>
+        <span id="c_senia">—</span>
+      </div>
+      <div class="calc-row">
+        <span>Saldo restante (70%)</span>
+        <span id="c_saldo">—</span>
+      </div>
+      <div class="calc-row total">
+        <span><strong>Total</strong></span>
+        <span id="c_total_fmt">—</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Seña abonada en este acto ($)</label>
+      <input type="number" id="p_senia_custom" placeholder="Se calcula automático (30%)" oninput="calcular()">
+    </div>
+
+    <div class="section-label">Modalidad de pago</div>
+    <div class="field">
+      <label>Modalidad</label>
+      <select id="p_modalidad" onchange="calcular()">
+        <option value="contado">Contado (sin ajuste)</option>
+        <option value="cuotas">Cuotas mensuales con ajuste IPC</option>
+      </select>
+    </div>
+    <div id="info_modalidad" class="modalidad-info"></div>
+
+    <button class="btn-generar" onclick="generar()">Generar contrato</button>
+    <button class="btn-imprimir" onclick="window.print()">Imprimir / Guardar PDF</button>
+  </aside>
+
+  <!-- PREVIEW -->
+  <main class="preview-panel">
+    <div class="contrato" id="contrato_preview">
+      <div class="contrato-header">
+        <div class="nombre-evento">El Rectángulo</div>
+        <div class="subtitulo">Contrato de Reserva y Alquiler de Instalaciones · Colonia Cello, Santa Fe</div>
+      </div>
+      <p style="color:#8C7B68; font-size:12px; text-align:center; font-style:italic;">
+        Completá el formulario y presioná "Generar contrato" para ver el texto final.
+      </p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── UTILIDADES ─────────────────────────────────────────────────────────────
+
+const UNIDADES = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
+  'diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+const DECENAS = ['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+const CENTENAS = ['','ciento','doscientos','trescientos','cuatrocientos','quinientos',
+  'seiscientos','setecientos','ochocientos','novecientos'];
+
+function num2str(n) {
+  n = Math.round(n);
+  if (n === 0) return 'cero';
+  if (n < 0) return 'menos ' + num2str(-n);
+  if (n === 100) return 'cien';
+  if (n < 20) return UNIDADES[n];
+  if (n < 30) return n === 20 ? 'veinte' : 'veinti' + UNIDADES[n - 20];
+  if (n < 100) {
+    const d = Math.floor(n / 10), u = n % 10;
+    return DECENAS[d] + (u ? ' y ' + UNIDADES[u] : '');
+  }
+  if (n < 1000) {
+    const c = Math.floor(n / 100), r = n % 100;
+    return CENTENAS[c] + (r ? ' ' + num2str(r) : '');
+  }
+  if (n < 1000000) {
+    const m = Math.floor(n / 1000), r = n % 1000;
+    const milStr = m === 1 ? 'mil' : num2str(m) + ' mil';
+    return milStr + (r ? ' ' + num2str(r) : '');
+  }
+  const mm = Math.floor(n / 1000000), r = n % 1000000;
+  const mStr = mm === 1 ? 'un millón' : num2str(mm) + ' millones';
+  return mStr + (r ? ' ' + num2str(r) : '');
+}
+
+function formatPesos(n) {
+  return '$ ' + Math.round(n).toLocaleString('es-AR');
+}
+
+function enLetras(n) {
+  const parteEntera = Math.floor(n);
+  const cents = Math.round((n - parteEntera) * 100);
+  let txt = num2str(parteEntera).charAt(0).toUpperCase() + num2str(parteEntera).slice(1);
+  if (cents > 0) txt += ' con ' + num2str(cents) + '/100';
+  return txt;
+}
+
+function calcular() {
+  const total = parseFloat(document.getElementById('p_total').value) || 0;
+  const seniaCustom = parseFloat(document.getElementById('p_senia_custom').value);
+  const modalidad = document.getElementById('p_modalidad').value;
+
+  const seniaAuto = Math.round(total * 0.30);
+  const senia = isNaN(seniaCustom) ? seniaAuto : Math.round(seniaCustom);
+  const saldo = total - senia;
+
+  const box = document.getElementById('calc_box');
+  if (total > 0) {
+    box.style.display = 'block';
+    document.getElementById('c_senia').textContent = formatPesos(seniaAuto);
+    document.getElementById('c_saldo').textContent = formatPesos(total - seniaAuto);
+    document.getElementById('c_total_fmt').textContent = formatPesos(total);
+  } else {
+    box.style.display = 'none';
+  }
+
+  // Info modalidad
+  const info = document.getElementById('info_modalidad');
+  if (modalidad === 'cuotas') {
+    info.className = 'modalidad-info alerta';
+    info.textContent = 'Solo disponible si el evento se contrata con 2 meses o más de anticipación y la seña no cubre el 70% del total. Se aplica IPC mes vencido sobre cada cuota.';
+  } else {
+    info.className = 'modalidad-info';
+    info.textContent = 'Precio congelado sin ajuste. 30% en este acto, saldo 48 hs antes del evento.';
+  }
+}
+
+// ── GENERAR CONTRATO ────────────────────────────────────────────────────────
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function generar() {
+  const fDia = v('f_dia'); const fMes = v('f_mes'); const fAnio = v('f_anio');
+  const cNombre = v('c_nombre'); const cDni = v('c_dni');
+  const cDomicilio = v('c_domicilio'); const cCiudad = v('c_ciudad');
+  const eDia = v('e_dia'); const eMes = v('e_mes'); const eAnio = v('e_anio');
+  const eHora = v('e_hora'); const eTol = v('e_tolerancia');
+  const eAdultos = v('e_adultos'); const eMenores = v('e_menores');
+  const pTotal = parseFloat(v('p_total')) || 0;
+  const seniaRaw = parseFloat(document.getElementById('p_senia_custom').value);
+  const senia = isNaN(seniaRaw) ? Math.round(pTotal * 0.30) : Math.round(seniaRaw);
+  const saldo = pTotal - senia;
+  const modalidad = v('p_modalidad');
+
+  const fechaContrato = `${fDia} días del mes de ${fMes} de ${fAnio}`;
+  const fechaEvento = `${eDia} de ${eMes} de ${eAnio}`;
+
+  // Calcular anticipación en meses
+  const hoy = new Date();
+  const fechaEv = new Date(`${eAnio}-${padMes(eMes)}-${String(eDia).padStart(2,'0')}`);
+  const diffMs = fechaEv - hoy;
+  const diffMeses = diffMs / (1000 * 60 * 60 * 24 * 30);
+  const esCuotasValido = modalidad === 'cuotas' && diffMeses >= 2 && senia < pTotal * 0.70;
+
+  // Textos de pago
+  let textoPago = '';
+  if (modalidad === 'contado' || !esCuotasValido) {
+    textoPago = `En este acto se abona la suma de <span class="highlight">${formatPesos(senia)} (${enLetras(senia)} pesos)</span> en concepto de seña, reserva de la fecha y pago a cuenta del costo total, sirviendo el presente instrumento de eficaz recibo. El saldo de <span class="highlight">${formatPesos(saldo)} (${enLetras(saldo)} pesos)</span> deberá abonarse dentro de las <strong>48 horas previas</strong> a la realización del evento, sin ajuste de ninguna naturaleza.`;
+  } else {
+    textoPago = `En este acto se abona la suma de <span class="highlight">${formatPesos(senia)} (${enLetras(senia)} pesos)</span> en concepto de seña y reserva de la fecha. El saldo de <span class="highlight">${formatPesos(saldo)} (${enLetras(saldo)} pesos)</span> podrá abonarse en cuotas mensuales, aplicándose sobre cada cuota el índice IPC del mes vencido anterior al pago, emitido por el INDEC. El saldo total, con los ajustes correspondientes, deberá quedar cancelado dentro de las <strong>48 horas previas</strong> al evento.`;
+  }
+
+  const html = `
+    <div class="contrato-header">
+      <div class="nombre-evento">El Rectángulo</div>
+      <div class="subtitulo">Contrato de Reserva y Alquiler de Instalaciones · Colonia Cello, Santa Fe</div>
+    </div>
+
+    <p>En la localidad de Colonia Cello, a los <strong>${fechaContrato}</strong>, entre los Sres. <strong>BONINO, Martín Gerardo</strong>, D.N.I. N° 27.003.452, y <strong>BONINO, Mauricio Edmundo</strong>, D.N.I. N° 29.628.637, en su carácter de titulares del Establecimiento para Eventos Sociales y Empresariales <strong>"EL RECTÁNGULO"</strong>, con domicilio en Zona Rural, Colonia Cello, Provincia de Santa Fe, en adelante <strong>"EL RECTÁNGULO"</strong>; y por la otra parte el/la Sr/a. <strong>${cNombre || '_______________'}</strong>, D.N.I. N° <strong>${cDni || '_______________'}</strong>, con domicilio en <strong>${cDomicilio || '_______________'}</strong>, ciudad de <strong>${cCiudad || '_______________'}</strong>, en adelante <strong>"EL/LA CLIENTE"</strong>; convienen en celebrar el presente contrato privado que se regirá por las cláusulas que a continuación se detallan:</p>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Primera — Objeto</div>
+      <p>"EL RECTÁNGULO" se compromete a proporcionar al/a la CLIENTE las instalaciones del establecimiento sito en Zona Rural de la localidad de Colonia Cello, Provincia de Santa Fe, para la realización de un evento a llevarse a cabo el día <span class="highlight">${fechaEvento}</span>, con inicio pactado a las <strong>${eHora || '__:__'} horas</strong> y una tolerancia máxima de <strong>${eTol || '__'} hora/s</strong> adicionales. Las instalaciones incluyen espacios de parque, áreas de esparcimiento, sector de parking y toilette, conforme al detalle de servicios descriptos en el Anexo Condiciones-01, que forma parte integrante del presente contrato. Se estima la concurrencia de <strong>${eAdultos || '__'} adultos</strong> y <strong>${eMenores || '__'} menores de 12 años</strong>.</p>
+    </div>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Segunda — Precio y Condiciones de Pago</div>
+      <p>Las partes convienen que el precio total del alquiler de las instalaciones es de <span class="highlight">${formatPesos(pTotal)} (${enLetras(pTotal)} pesos)</span>, conforme al detalle obrante en el archivo adjunto. ${textoPago}</p>
+    </div>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Tercera — Cancelación y Reprogramación</div>
+      <p><strong>a) Con aviso previo:</strong> Si el/la CLIENTE cancelara el evento con una anticipación mínima de <strong>15 días corridos</strong>, perderá la seña abonada y no estará obligado/a a abonar penalidad adicional alguna, quedando la fecha liberada para "EL RECTÁNGULO".</p>
+      <p><strong>b) Sin aviso previo:</strong> Si el/la CLIENTE cancelara sin respetar el plazo indicado, deberá abonar a "EL RECTÁNGULO" el porcentaje de reserva completo del <strong>30% del precio total</strong> (es decir, <span class="highlight">${formatPesos(pTotal * 0.30)} — ${enLetras(pTotal * 0.30)} pesos</span>), con independencia de lo ya abonado en concepto de seña.</p>
+      <p><strong>c) Reprogramación:</strong> Si ambas partes acordaren reprogramar el evento, la nueva fecha quedará sujeta a disponibilidad de "EL RECTÁNGULO" y deberá acordarse dentro de los <strong>30 días corridos</strong> siguientes a la fecha original, sin penalidad adicional para ninguna de las partes.</p>
+    </div>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Cuarta — Caso Fortuito o Fuerza Mayor</div>
+      <p>Ninguna de las partes podrá suspender la realización del evento por causas ajenas al presente contrato, salvo caso fortuito o fuerza mayor debidamente acreditados. En dicho supuesto, el evento se reprogramará para la próxima fecha disponible de "EL RECTÁNGULO" sin compromisos asumidos con terceros, sin penalidad para ninguna de las partes y sin ajuste de precio. La nueva fecha deberá acordarse dentro de los <strong>60 días corridos</strong> de producido el impedimento.</p>
+    </div>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Quinta — Responsabilidad por Daños</div>
+      <p>El/la CLIENTE toma a su cargo y se hace responsable de los costos por roturas y daños que se produjeran en las instalaciones, en la vajilla o en cualquier elemento contratado, cuando dichos daños sean consecuencia de actos voluntarios o de negligencia de los concurrentes. Las roturas habituales producto de actos involuntarios están contempladas dentro del precio del alquiler y serán absorbidas por "EL RECTÁNGULO". En caso de daños de consideración, los mismos serán evaluados y comunicados al/a la CLIENTE dentro de las <strong>48 horas</strong> posteriores a la finalización del evento.</p>
+    </div>
+
+    <div class="clausula">
+      <div class="clausula-titulo">Sexta — Disposiciones Generales</div>
+      <p>El/la CLIENTE se compromete a respetar los horarios pactados en la Cláusula Primera. El incumplimiento del horario de cierre podrá generar un cargo adicional a convenir entre las partes. "EL RECTÁNGULO" no asume responsabilidad por la seguridad personal de los concurrentes ni por los bienes que estos introduzcan al establecimiento. El presente contrato se celebra en <strong>dos (2) ejemplares</strong> de igual tenor y a un solo efecto, previa lectura y ratificación por ambas partes.</p>
+    </div>
+
+    <div class="firmas">
+      <div class="firma-bloque">
+        <div class="nombre">BONINO, Martín Gerardo</div>
+        <div class="rol">D.N.I. N° 27.003.452 — EL RECTÁNGULO</div>
+      </div>
+      <div class="firma-bloque">
+        <div class="nombre">BONINO, Mauricio Edmundo</div>
+        <div class="rol">D.N.I. N° 29.628.637 — EL RECTÁNGULO</div>
+      </div>
+    </div>
+    <div class="firma-bloque-full">
+      <div class="nombre">${cNombre || '___________________________'}</div>
+      <div class="rol">D.N.I. N° ${cDni || '_______________'} — EL/LA CLIENTE</div>
+    </div>
+  `;
+
+  document.getElementById('contrato_preview').innerHTML = html;
+}
+
+function padMes(mes) {
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return String(meses.indexOf(mes.toLowerCase()) + 1).padStart(2,'0');
+}
+
+// Inicializar
+calcular();
+</script>
+
+</body>
+</html>
